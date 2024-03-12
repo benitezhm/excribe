@@ -12,7 +12,7 @@ This package is available in [Hex](https://hex.pm/packages/excribe). Simply add
 
 ```elixir
 def deps do
-  [{:excribe, "~> 0.1.0"}]
+  [{:excribe, git: "git@github.com:benitezhm/excribe.git"}]
 end
 ```
 
