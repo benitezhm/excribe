@@ -65,13 +65,13 @@ defmodule Excribe do
 
   @spec format(binary, options) :: binary
 
-  def format(str, opts \\ [])
+  def format(str, opts \\ %{})
 
   def format(str, opts) do
-    width = opts |> Keyword.get(:width, 80)
-    align = opts |> Keyword.get(:align, :left)
-    indent = opts |> Keyword.get(:indent)
-    hanging = opts |> Keyword.get(:hanging)
+    width = opts |> Map.get(:width, 80)
+    align = opts |> Map.get(:align, :left)
+    indent = opts |> Map.get(:indent)
+    hanging = opts |> Map.get(:hanging)
     indent = (align in [:left, :justify] && indent) || 0
     hanging = (align in [:left, :justify] && hanging) || 0
     opts = %{width: width, align: align, indent: indent, hanging: hanging}

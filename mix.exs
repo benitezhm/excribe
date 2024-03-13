@@ -21,8 +21,8 @@ defmodule Excribe.Mixfile do
     [
       name: :excribe,
       licenses: ["MIT"],
-      maintainers: ["dalgona@hontou.moe"],
-      links: %{"GitHub" => "https://github.com/Dalgona/excribe"}
+      maintainers: ["dalgona@hontou.moe", "benitezhm@gmail.com"],
+      links: %{"GitHub" => "https://github.com/benitezhm/excribe"}
     ]
   end
 
