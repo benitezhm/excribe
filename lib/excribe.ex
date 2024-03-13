@@ -7,11 +7,11 @@ defmodule Excribe do
   """
 
   @type options :: %{
-    width: pos_integer,
-    indent: non_neg_integer,
-    hanging: non_neg_integer,
-    align: align_option
-  }
+          width: pos_integer,
+          indent: non_neg_integer,
+          hanging: non_neg_integer,
+          align: align_option
+        }
 
   @type align_option :: :left | :right | :center | :justify
 
@@ -65,14 +65,17 @@ defmodule Excribe do
 
   @spec format(binary, options) :: binary
 
-  def format(str, opts \\ %{})
+  def format(str, opts \\ [])
 
   def format(str, opts) do
-    width = opts[:width] || 80
-    align = opts[:align] || :left
-    indent = (align in [:left, :justify]) && opts[:indent] || 0
-    hanging = (align in [:left, :justify]) && opts[:hanging] || 0
+    width = opts |> Keyword.get(:width, 80)
+    align = opts |> Keyword.get(:align, :left)
+    indent = opts |> Keyword.get(:indent)
+    hanging = opts |> Keyword.get(:hanging)
+    indent = (align in [:left, :justify] && indent) || 0
+    hanging = (align in [:left, :justify] && hanging) || 0
     opts = %{width: width, align: align, indent: indent, hanging: hanging}
+
     str
     |> String.split(~r/\s+/, trim: true)
     |> make_paragraph(opts)
@@ -89,13 +92,13 @@ defmodule Excribe do
   defp make_paragraph(words, opts, acc \\ [])
 
   defp make_paragraph([], _opts, acc) do
-    Enum.reverse acc
+    Enum.reverse(acc)
   end
 
   defp make_paragraph(words, opts, acc) do
     width = opts.width - if acc == [], do: opts.indent, else: opts.hanging
-    {line, rest} = make_line words, width
-    make_paragraph rest, opts, [line|acc]
+    {line, rest} = make_line(words, width)
+    make_paragraph(rest, opts, [line | acc])
   end
 
   @spec make_line([binary], non_neg_integer, [binary]) :: {[binary], [binary]}
@@ -106,30 +109,34 @@ defmodule Excribe do
     {Enum.reverse(acc), []}
   end
 
-  defp make_line([word|rest], width, acc) do
-    word_len = String.length word
+  defp make_line([word | rest], width, acc) do
+    word_len = String.length(word)
+
     cond do
       acc == [] and word_len > width ->
         {[word], rest}
+
       word_len > width ->
-        {Enum.reverse(acc), [word|rest]}
+        {Enum.reverse(acc), [word | rest]}
+
       :otherwise ->
-        make_line rest, width - word_len - 1, [word|acc]
+        make_line(rest, width - word_len - 1, [word | acc])
     end
   end
 
-  @spec render_lines([[binary]], options, [binary]) :: :any # TODO
+  # TODO
+  @spec render_lines([[binary]], options, [binary]) :: :any
 
   defp render_lines(lines, opts, acc \\ [])
 
   defp render_lines([], _opts, acc) do
-    Enum.reverse acc
+    Enum.reverse(acc)
   end
 
-  defp render_lines([line|rest], opts, acc) do
+  defp render_lines([line | rest], opts, acc) do
     first? = acc == []
     last? = rest == []
-    render_lines rest, opts, [render_line(line, opts, first?, last?)|acc]
+    render_lines(rest, opts, [render_line(line, opts, first?, last?) | acc])
   end
 
   @spec render_line([binary], options, boolean, boolean) :: binary
@@ -137,45 +144,49 @@ defmodule Excribe do
   defp render_line(line, opts, first_line?, last_line?)
 
   defp render_line(line, %{align: :left} = opts, first_line?, _) do
-    n = first_line? && opts.indent || opts.hanging
-    leading = String.duplicate " ", n
+    n = (first_line? && opts.indent) || opts.hanging
+    leading = String.duplicate(" ", n)
     leading <> Enum.join(line, " ")
   end
 
   defp render_line(line, %{align: :right} = opts, _, _) do
-    joined = Enum.join line, " "
-    String.pad_leading joined, opts.width, " "
+    joined = Enum.join(line, " ")
+    String.pad_leading(joined, opts.width, " ")
   end
 
   defp render_line(line, %{align: :center} = opts, _, _) do
-    joined = Enum.join line, " "
-    len = div opts.width - String.length(joined), 2
-    String.pad_leading joined, opts.width - len, " "
+    joined = Enum.join(line, " ")
+    len = div(opts.width - String.length(joined), 2)
+    String.pad_leading(joined, opts.width - len, " ")
   end
 
   defp render_line(line, %{align: :justify} = opts, first_line?, false) do
-    n = first_line? && opts.indent || opts.hanging
-    leading = String.duplicate " ", n
-    nfree = opts.width - n - Enum.reduce(line, 0, & &2 + String.length(&1))
+    n = (first_line? && opts.indent) || opts.hanging
+    leading = String.duplicate(" ", n)
+    nfree = opts.width - n - Enum.reduce(line, 0, &(&2 + String.length(&1)))
     nspaces = Enum.count(line) - 1
+
     {min_space, remainder} =
       if nspaces == 0,
         do: {0, 0},
         else: {div(nfree, nspaces), rem(nfree, nspaces)}
-    sp1 = String.duplicate " ", min_space
+
+    sp1 = String.duplicate(" ", min_space)
     sp2 = sp1 <> " "
-    sp1_list = List.duplicate sp1, nspaces - remainder
-    sp2_list = List.duplicate sp2, remainder
+    sp1_list = List.duplicate(sp1, nspaces - remainder)
+    sp2_list = List.duplicate(sp2, remainder)
     spaces = sp1_list ++ sp2_list ++ [""]
+
     joined =
       [line, spaces]
-      |> Enum.zip
+      |> Enum.zip()
       |> Enum.map(fn {x, y} -> x <> y end)
-      |> Enum.join
+      |> Enum.join()
+
     leading <> joined
   end
 
   defp render_line(line, %{align: :justify} = opts, _, true) do
-    render_line line, %{opts|align: :left}, false, false
+    render_line(line, %{opts | align: :left}, false, false)
   end
 end
